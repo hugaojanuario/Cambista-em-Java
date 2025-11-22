@@ -1,26 +1,27 @@
 package com.cambio.service;
 
 import com.cambio.api.MoedaRecord;
+import com.cambio.models.Atributos;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Map;
 
 public class ConsultaCotacao {
 
-    private String code;
-    private String codein;
-    private String bid;
 
     public void buscaCotacao(String moedaBaseRecebe, String moedaAlvoRecebe) throws IOException, InterruptedException {
 
         Gson gson = new GsonBuilder()
-                .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
+                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .setPrettyPrinting()
                 .create();
 
@@ -34,38 +35,26 @@ public class ConsultaCotacao {
 
         String json = response.body();
         System.out.println(json);
-        MoedaRecord moeda = gson.fromJson(json,MoedaRecord.class);
+
+
+        Type tipoCotacao = new TypeToken<Map<String, MoedaRecord>>(){}.getType();
+
+        Map<String, MoedaRecord> cotacoesMap = gson.fromJson(json, tipoCotacao);
+
+        MoedaRecord moeda = null;
+        if (cotacoesMap != null && !cotacoesMap.isEmpty()) {
+            moeda = cotacoesMap.values().iterator().next();
+        } else {
+            System.err.println("Erro: Não foi possível obter dados da cotação.");
+            return;
+        }
+
         System.out.println(moeda);
 
+        Atributos atributos = new Atributos(moeda);
+        System.out.println(atributos);
+
 
     }
 
-    @Override
-    public String toString() {
-        return "ConsultaCotacao: " + "\ncode -> " + code + "\ncodein -> " + codein + "\nbid -> " + bid ;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getCodein() {
-        return codein;
-    }
-
-    public void setCodein(String codein) {
-        this.codein = codein;
-    }
-
-    public String getBid() {
-        return bid;
-    }
-
-    public void setBid(String bid) {
-        this.bid = bid;
-    }
 }
